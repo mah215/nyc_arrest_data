@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- **************************************************************************************** -->
+    <!-- *                                                                                      * -->
+    <!-- * Do not change anything within the <head></head> section of the HTML                  * -->
+    <!-- *                                                                                      * -->
+    <!-- **************************************************************************************** -->
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
+	<style> .btn{border:1px solid black; padding:5px;display:inline-block} 
+	body{
+		background-color: #77bdfa;
+	}
+
+	h1, p, button{ 
+		font-family: Verdana, sans-serif;
+		text-align: center;
+	}
+	.navigation{
+		text-align: center;
+		background-color: blanchedalmond;
+		padding: 10px;
+	}
+
+	#graphDisplayed1, #graphDisplayed2{
+		text-align: center;
+	}
+	.graph{
+		margin-bottom: 50px;
+	}
+	
+	</style>
+	<title>NYC Arrest Data</title>
+</head>
+<body>
+	<h1>NYC Arrest Data</h1>
+	<div class="navigation">
+	
+		<input type="button" class="btn btn-primary" id="borough_btn" value= "Boroughs"> 
+		<input type="button" class="btn btn-primary" id="offense_btn" value= "Top Offenses">
+	
+	</div>
+
+	<div class="container-fluid">
+		
+	<div class="row">
+		<div class="col-md-2"></div>
+
+			<div class="col-md-8" id="div-graph1" style="display: none;">
+
+				
+				<p>Press the button to see number of arrests in each borough of NYC. This is useful as it allows 
+					policy makers and authorities to see where the most arrests are taking place getting an idea 
+					of where crimes are most prevalent. They would then be able to allocate officers and resources efficiently.
+					Also, if you are looking to buy a home but not sure where, this would help! 
+				</p>
+
+				<p><input type="button" class="btn btn-primary" id="display1_btn" value="Refresh"></p>
+				<div class ="graph" id="graphDisplayed1"></div>
+			</div>
+
+			<div class="col-md-8" id="div-graph2" style="display: none;">
+			
+				<p>Select a borough to see the most common type of offenses occuring. This is useful 
+					as it compliments the other graph, now allowing policy makers and authorities
+					to see which types of crimes are occuring and how many arrests are being made 
+					for those crimes.
+				</p>
+				<p>(Refreshes with each selection, may take a minute.)</p>
+				<p><select id="mySelect">
+					<option value="">Choose One</option>
+					<option value="bronx">Bronx</option>
+					<option value="brooklyn">Brooklyn</option>
+					<option value="statenIsland">Staten Island</option>
+					<option value="manhattan">Manhattan</option>
+					<option value="queens">Queens</option>
+				  </select></p>
+				<div class ="graph" id="graphDisplayed2"></div>
+			</div>
+
+		<div class="col-md-2"></div>
+	</div>
+		
+	</div>
+</body>
+<script>
+	"use strict";
+	$('#div-graph1').show();
+
+function displayArrestBoroughPieChart() {
+
+	// Step 1: Get data from API
+	$.getJSON("https://data.cityofnewyork.us/resource/uip8-fykc.json?$limit=160000", function(arrest_data){
+		console.log(arrest_data);
+		// Step 2: Process your data, perform calculation
+		var bronx = 'B'; 
+        var countB = 0;
+        var brooklyn = 'K';
+        var countK = 0;
+        var statenIsland = 'S';
+        var countS = 0;
+        var manhattan = 'M';
+        var countM = 0;
+        var queens = 'Q'; 
+        var countQ = 0;
+		// var boro = ['K','Q','S','M','B'];
+			
+		for(var i=0; i < arrest_data.length;i++){
+			if(bronx == arrest_data[i]['arrest_boro']){
+				countB += 1;
+			}else if(brooklyn == arrest_data[i]['arrest_boro']){
+                countK += 1;
+            }else if(statenIsland == arrest_data[i]['arrest_boro']){
+                countS += 1;
+            }else if(manhattan == arrest_data[i]['arrest_boro']){
+                countM += 1;
+            }else{
+                countQ += 1;
+            }
+		} console.log('Bronx:' + countB + ' ' + 'Brookyln:' + countK + ' ' +
+        'Staten_Island:' + countS + ' ' +'Manhattan:' + countM + ' ' + 'Queens:' + countQ);
+	
+		var total = countB + countK + countS + countM + countQ;
+		var bRatio = countB / total;
+		var kRatio = countK / total;
+		var sRatio = countS / total;
+		var mRatio = countM / total;
+		var qRatio = countQ / total;
+		console.log(bRatio);
+
+		var bPercent = bRatio*100;
+		var kPercent = kRatio*100;
+		var sPercent = sRatio*100;
+		var mPercent = mRatio*100;
+		var qPercent = qRatio*100;
+
+
+		// Step 3: Prepare data for Image-Charts API 
+		var imageChtLabels = countB + '  ' + bPercent.toFixed(2) + '%' + '|' + countK + '  ' + kPercent.toFixed(2) + '%' + '|' + countS + '  ' 
+		+ sPercent.toFixed(2) + '%' + '|' + countM + '  ' + mPercent.toFixed(2) + '%' + '|' + countQ + '  ' + qPercent.toFixed(2) + '%';
+		
+		var imageChtData = bRatio + ',' + kRatio + ',' + sRatio + ',' + mRatio +',' + qRatio;	
+
+		// Step 4: Get image from Image-Charts API 
+		// var imageHTMLcode = '<img src="https://image-charts.com/chart?chs=700x190&chd=t:60,40&cht=p3&chl=Hello|World&chan&chf=ps0-0,lg,45,ffeb3b,0.2,f44336,1%7Cps0-1,lg,45,8bc34a,0.2,009688,1">'
+		// https://image-charts.com/chart?chs=700x190&chd=t:60,40&cht=p3&chl=Hello%7CWorld&chan&chf=ps0-0,lg,45,ffeb3b,0.2,f44336,1%7Cps0-1,lg,45,8bc34a,0.2,009688,1
+		
+		var imageHTMLcode = '<img src="https://image-charts.com/chart?cht=p3&chs=700x400&chtt=Arrests+By+Borough&chts=000000,20&chma=0,0,10,0&chdl=Bronx|Brooklyn|Staten_Island|Manhattan|Queens&chd=t:'+imageChtData+'&chl='+imageChtLabels+'" alt="Static Chart"/>';
+		
+		console.log(imageHTMLcode);
+		$('#graphDisplayed1').html(imageHTMLcode);
+	});
+
+}
+
+function displayArrestOffensePieChart() {
+
+// Step 1: Get data from API
+$.getJSON("https://data.cityofnewyork.us/resource/uip8-fykc.json?$limit=200000", function(arrest_data){
+	console.log(arrest_data);
+	// Step 2: Process your data, perform calculation
+		var bronx = 'B'; 
+        var bCountAssault = 0;
+		var bCountFelony = 0;
+		var bCountDrugs = 0;
+		
+
+        var brooklyn = 'K';
+        var kCountAssault = 0;
+		var kCountFelony = 0;
+		var kCountLaw = 0;
+		
+        var statenIsland = 'S';
+        var sCountAssault = 0;
+		var sCountDrugs = 0;
+		var sCountLaw = 0;
+		
+
+        var manhattan = 'M';
+		var mCountAssault = 0;
+		var mCountLarceny = 0;
+		var mCountDrugs = 0;
+		
+        
+        var queens = 'Q'; 
+		var qCountAssault = 0;
+		var qCountDrugs = 0;
+		var qCountLaw = 0;
+		
+	
+		//Bronx Calculations	
+		for(var i=0; i < arrest_data.length;i++){
+			if(bronx == arrest_data[i]['arrest_boro'] && arrest_data[i]['ofns_desc'] == 'ASSAULT 3 & RELATED OFFENSES'){
+				bCountAssault += 1;
+			}else if(bronx == arrest_data[i]['arrest_boro'] && arrest_data[i]['ofns_desc'] == 'FELONY ASSAULT'){
+                bCountFelony += 1;
+            }else if(bronx == arrest_data[i]['arrest_boro'] && arrest_data[i]['ofns_desc'] == 'DANGEROUS DRUGS'){
+                bCountDrugs += 1;
+            }}
+		//Brooklyn Calculations
+		for(var i=0; i < arrest_data.length;i++){
+			if(brooklyn == arrest_data[i]['arrest_boro'] && arrest_data[i]['ofns_desc'] == 'ASSAULT 3 & RELATED OFFENSES'){
+				kCountAssault += 1;
+			}else if(brooklyn == arrest_data[i]['arrest_boro'] && arrest_data[i]['ofns_desc'] == 'FELONY ASSAULT'){
+                kCountFelony += 1;
+            }else if(brooklyn == arrest_data[i]['arrest_boro'] && arrest_data[i]['ofns_desc'] == 'MISCELLANEOUS PENAL LAW'){
+                kCountLaw += 1;
+            }}
+		// statenIsland
+		for(var i=0; i < arrest_data.length;i++){
+			if(statenIsland == arrest_data[i]['arrest_boro'] && arrest_data[i]['ofns_desc'] == 'ASSAULT 3 & RELATED OFFENSES'){
+				sCountAssault += 1;
+			}else if(statenIsland == arrest_data[i]['arrest_boro'] && arrest_data[i]['ofns_desc'] == 'MISCELLANEOUS PENAL LAW'){
+                sCountLaw += 1;
+            }else if(statenIsland == arrest_data[i]['arrest_boro'] && arrest_data[i]['ofns_desc'] == 'DANGEROUS DRUGS'){
+                sCountDrugs += 1;
+            }}
+		// manhattan
+		for(var i=0; i < arrest_data.length;i++){
+			if(manhattan == arrest_data[i]['arrest_boro'] && arrest_data[i]['ofns_desc'] == 'ASSAULT 3 & RELATED OFFENSES'){
+				mCountAssault += 1;
+			}else if(manhattan == arrest_data[i]['arrest_boro'] && arrest_data[i]['ofns_desc'] == 'PETIT LARCENY'){
+                mCountLarceny += 1;
+            }else if(manhattan == arrest_data[i]['arrest_boro'] && arrest_data[i]['ofns_desc'] == 'DANGEROUS DRUGS'){
+                mCountDrugs += 1;
+            }}
+		// queens
+		for(var i=0; i < arrest_data.length;i++){
+			if(queens == arrest_data[i]['arrest_boro'] && arrest_data[i]['ofns_desc'] == 'ASSAULT 3 & RELATED OFFENSES'){
+				qCountAssault += 1;
+			}else if(queens == arrest_data[i]['arrest_boro'] && arrest_data[i]['ofns_desc'] == 'MISCELLANEOUS PENAL LAW'){
+                qCountLaw += 1;
+            }else if(queens == arrest_data[i]['arrest_boro'] && arrest_data[i]['ofns_desc'] == 'DANGEROUS DRUGS'){
+                qCountDrugs += 1;
+            }}
+
+		var bTotal = bCountAssault + bCountDrugs + bCountFelony;
+		var bAssaultRatio = bCountAssault/bTotal;
+		var bDrugsRatio = bCountDrugs/bTotal;
+		var bFelonyRatio = bCountFelony /bTotal;
+
+		var kTotal = kCountAssault + kCountFelony + kCountLaw;
+		var kAssaultRatio = kCountAssault/kTotal;
+		var kFelonyRatio = kCountFelony/kTotal;
+		var kLawRatio = kCountLaw/kTotal;
+
+		var sTotal = sCountAssault + sCountDrugs + sCountLaw;
+		var sAssaultRatio = sCountAssault/sTotal;
+		var sDrugsRatio = sCountDrugs/sTotal;
+		var sLawRatio = sCountLaw/sTotal;
+
+		var mTotal = mCountAssault + mCountDrugs + mCountLarceny;
+		var mAssaultRatio = mCountAssault/mTotal;
+		var mDrugsRatio = mCountDrugs/mTotal;
+		var mLarcenyRatio = mCountLarceny/mTotal;
+
+		var qTotal = qCountAssault + qCountDrugs + qCountLaw;
+		var qAssaultRatio = qCountAssault/qTotal;
+		var qDrugsRatio = qCountDrugs/qTotal;
+		var qLawRatio = qCountLaw/qTotal;
+		
+	// Step 3: Prepare data for Image-Charts API 
+    // bronx 
+	var bImageChtLabels = bCountAssault + '|' + bCountFelony + '|' + bCountDrugs;
+	var bImageChtData = bCountAssault + ',' + bCountFelony + ',' + bCountDrugs;	
+	
+	var kImageChtLabels = kCountAssault + '|' + kCountFelony + '|' + kCountLaw;
+	var kImageChtData = kCountAssault + ',' + kCountFelony + ',' + kCountLaw;
+
+	var sImageChtLabels = sCountAssault + '|' + sCountLaw + '|' + sCountDrugs;
+	var sImageChtData = sCountAssault + ',' + sCountLaw + ',' + sCountDrugs;
+
+	var mImageChtLabels = mCountAssault + '|' + mCountLarceny + '|' + mCountDrugs;
+	var mImageChtData = mCountAssault + ',' + mCountLarceny + ',' + mCountDrugs;
+
+	var qImageChtLabels = bCountAssault + '|' + bCountFelony + '|' + bCountDrugs;
+	var qImageChtData = bCountAssault + ',' + bCountFelony + ',' + bCountDrugs;
+
+	 
+	
+	// Step 4: Get image from Image-Charts API 
+	
+	var bImageHTMLcode = '<img src="https://image-charts.com/chart?cht=bvg&chxt=x,y&chxr=1,0,10000&chxl=0:|Assault+3rd+Degree|Felony+Assault|Drugs|&chs=700x400&chtt=Top+Three+Offenses:+Bronx&chts=000000,20&chd=a:'+bImageChtData+'&chl='+bImageChtLabels+'" alt="Static Chart"/>';
+	var kImageHTMLcode = '<img src="https://image-charts.com/chart?cht=bvg&chxt=x,y&chxr=1,0,10000&chxl=0:|Assault+3rd+Degree|Felony+Assault|Misc.+Penal+Law|&chs=700x400&chtt=Top+Three+Offenses:+Brooklyn&chts=000000,20&chd=a:'+kImageChtData+'&chl='+kImageChtLabels+'" alt="Static Chart"/>';
+	var sImageHTMLcode = '<img src="https://image-charts.com/chart?cht=bvg&chxt=x,y&chxr=1,0,10000&chxl=0:|Assault+3rd+Degree|Misc.+Penal+Law|Drugs|&chs=700x400&chtt=Top+Three+Offenses:+Staten+Island&chts=000000,20&chd=a:'+sImageChtData+'&chl='+sImageChtLabels+'" alt="Static Chart"/>';
+	var mImageHTMLcode = '<img src="https://image-charts.com/chart?cht=bvg&chxt=x,y&chxr=1,0,10000&chxl=0:|Assault+3rd+Degree|Petit+Larceny|Drugs|&chs=700x400&chtt=Top+Three+Offenses:+Manhattan&chts=000000,20&chd=a:'+mImageChtData+'&chl='+mImageChtLabels+'" alt="Static Chart"/>';
+	var qImageHTMLcode = '<img src="https://image-charts.com/chart?cht=bvg&chxt=x,y&chxr=1,0,10000&chxl=0:|Assault+3rd+Degree|Felony+Assault|Misc.+Penal+Law|&chs=700x400&chtt=Top+Three+Offenses:+Queens&chts=000000,20&chd=a:'+qImageChtData+'&chl='+qImageChtLabels+'" alt="Static Chart"/>';
+
+	if($('#mySelect').val() == 'bronx'){
+		$('#graphDisplayed2').html(bImageHTMLcode)
+	}else if($('#mySelect').val() == 'brooklyn'){
+		$('#graphDisplayed2').html(kImageHTMLcode)
+	}else if($('#mySelect').val() == 'statenIsland'){
+		$('#graphDisplayed2').html(sImageHTMLcode)
+	}else if($('#mySelect').val() == 'manhattan'){
+		$('#graphDisplayed2').html(mImageHTMLcode)
+	}else if($('#mySelect').val() == 'queens'){
+		$('#graphDisplayed2').html(qImageHTMLcode)
+	}
+
+});
+
+} 
+
+$('#display1_btn').click(function(){
+	displayArrestBoroughPieChart();
+})
+
+$('#mySelect').on('change', function() {
+  displayArrestOffensePieChart();
+});
+
+
+$('#offense_btn').click(function(){
+	$('#div-graph1').hide();
+	$('#div-graph2').show();
+})
+
+$('#borough_btn').click(function(){
+	$('#div-graph1').show();
+	$('#div-graph2').hide();
+})
+
+
+
+
+
+
+
+</script>
+</html>
